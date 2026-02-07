@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
   try {
     const { url, score, issues, timestamp } = await request.json();
 
+    const chunks: Buffer[] = [];
     const doc = new PDFDocument({ margin: 50 });
-    const chunks: Uint8Array[] = [];
 
-    doc.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+    doc.on('data', (chunk) => chunks.push(chunk));
 
     doc.fontSize(20).text('Rapport d\'Accessibilité Web', { align: 'center' });
     doc.moveDown();
@@ -44,19 +44,11 @@ export async function POST(request: NextRequest) {
 
     doc.end();
 
-    const pdfBuffer = await new Promise<Uint8Array>((resolve) => {
-      doc.on('end', () => {
-        const buffer = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-        let offset = 0;
-        for (const chunk of chunks) {
-          buffer.set(chunk, offset);
-          offset += chunk.length;
-        }
-        resolve(buffer);
-      });
+    const pdfBuffer = await new Promise<Buffer>((resolve) => {
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
     });
 
-    return new NextResponse(pdfBuffer, {
+    return new Response(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="rapport-accessibilite-${Date.now()}.pdf"`,
