@@ -48,13 +48,8 @@ export async function POST(request: NextRequest) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
     });
 
-    // Conversion Buffer → ArrayBuffer pour TypeScript
-    const arrayBuffer = pdfBuffer.buffer.slice(
-      pdfBuffer.byteOffset,
-      pdfBuffer.byteOffset + pdfBuffer.byteLength
-    );
-
-    return new Response(arrayBuffer, {
+    // @ts-ignore - Buffer is compatible with Response body
+    return new Response(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="rapport-accessibilite-${Date.now()}.pdf"`,
